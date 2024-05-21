@@ -1,2 +1,11 @@
-data/
 __pycache__/
+*.pt
+*.pth
+*.ckpt
+*.zip
+
+data/
+dataset/
+temp.ipynb
+checkpoints/*
+

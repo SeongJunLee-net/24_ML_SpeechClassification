@@ -1,0 +1,73 @@
+wandb_version: 1
+
+train_dir:
+  desc: null
+  value: ./dataset/raw16k/train/
+train_ctl:
+  desc: null
+  value: ./fmcc_train.ctl
+val_dir:
+  desc: null
+  value: ./dataset/raw16k/test/
+val_ctl:
+  desc: null
+  value: ./fmcc_test_ref.ctl
+result_dir:
+  desc: null
+  value: ./checkpoints
+model:
+  desc: null
+  value:
+    class: BaseCNN
+    params: {}
+epochs:
+  desc: null
+  value: 10
+batch_size:
+  desc: null
+  value: 128
+optimizer:
+  desc: null
+  value: Adam
+lr:
+  desc: null
+  value: 0.01
+seed:
+  desc: null
+  value: 1234
+use_wandb:
+  desc: null
+  value: true
+wandb_entity:
+  desc: null
+  value: dnltjdwls1
+wandb_project:
+  desc: null
+  value: ML_2024
+_wandb:
+  desc: null
+  value:
+    python_version: 3.10.14
+    cli_version: 0.17.0
+    framework: torch
+    is_jupyter_run: false
+    is_kaggle_kernel: true
+    start_time: 1716277551
+    t:
+      1:
+      - 1
+      - 55
+      2:
+      - 1
+      - 53
+      - 55
+      3:
+      - 13
+      - 16
+      - 23
+      4: 3.10.14
+      5: 0.17.0
+      8:
+      - 2
+      - 5
+      13: linux-x86_64
