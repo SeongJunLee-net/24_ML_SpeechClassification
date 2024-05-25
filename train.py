@@ -11,6 +11,7 @@ import wandb
 from tqdm import tqdm
 from src.models import load_model_from_config
 from src.utils import prepare_train, prepare_val, FMCCdataset, label2gen
+from src.models.resnet import Bottleneck,BasicBlock
 
 
 def parse_arguments():
@@ -53,11 +54,21 @@ if __name__ == "__main__":
     config, result_dir = init_train(args)
     device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
     seed_everything(config['seed'])
+
+
     
     # 1. Prepare Dataset
     train_paths, train_targets = prepare_train(config['train_ctl'], config['train_dir'])
     train_dataset = FMCCdataset(train_paths, train_targets, **config)
     train_loader = DataLoader(train_dataset, batch_size=config['batch_size'], num_workers=4, shuffle=True)
+
+    ## 변경
+    if config['model']['params']['block'] == 'Bottleneck':
+        config['model']['params']['block'] = Bottleneck
+    else:
+        config['model']['params']['block'] = BasicBlock
+    
+
     
     val_paths, val_targets = prepare_val(config['val_ctl'], config['val_dir'])
     val_dataset = FMCCdataset(val_paths, val_targets, **config)
@@ -66,7 +77,7 @@ if __name__ == "__main__":
     # 2. Prepare model, optimizer, etc.
     model = load_model_from_config(config)
     model.to(device)
-    # 손실 함수 및 옵티마이저 정의
+    
     criterion = nn.BCELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=config['lr'])
 

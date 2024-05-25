@@ -3,7 +3,10 @@ from typing import List
 import numpy as np
 import librosa as lr
 import torch
+import torch.nn as nn
+from torchsummary import summary
 from torch.utils.data import Dataset
+from typing import Union
 
 # Macros
 AUDIO_CHANNELS = 1
@@ -51,11 +54,23 @@ def prepare_val(ctl_path, data_dir):
   
     return file_paths, targets
 
+def get_parameter_count(model:nn.Module):
+    cnt = sum(p for p in model.parameters() if p.requires_grad)
+    return cnt
+    
+def torchsummary(model:nn.Module, input_size:torch.Tensor,batch_size:int):
+    '''
+    Description
+    Model,Input Tensor Size와 Batch Size를 집어넣으면
+    각 Layer별 output shape와 Parameter 개수를 출력해준다.
+    '''
+    print(summary(model,input_size,batch_size))
+
 
 class FMCCdataset(Dataset):
     def __init__(self,
                  file_paths: List[os.PathLike],
-                 targets: List[str]|None = None,    # List of "male" / "feml"
+                 targets: Union[List[str],None] = None,    # List of "male" / "feml"
                  feature_type="mel",                # ["mel" / "mfcc" / "wav"]
                  **kwargs
                  ):
@@ -66,15 +81,14 @@ class FMCCdataset(Dataset):
         for path in file_paths:
             audio_array = read_raw_file(path)
             audio_array = lr.util.fix_length(audio_array, size=int(MAX_AUDIO_LENGTH * SAMPLE_RATE))
-            match feature_type:
-                case "mfcc":
-                    feature = lr.feature.mfcc(y=audio_array, sr=SAMPLE_RATE, n_mfcc=32)
-                case "mel":
-                    feature = lr.feature.melspectrogram(y=audio_array, sr=SAMPLE_RATE, n_mels=32)
-                case "wav":
-                    feature = audio_array.copy()
-                case _:
-                    raise ValueError(f"Unexpected feature type: {feature_type}")
+            if feature_type=="mfcc":
+                feature = lr.feature.mfcc(y=audio_array, sr=SAMPLE_RATE, n_mfcc=32)
+            elif feature_type == "mel":
+                feature = lr.feature.melspectrogram(y=audio_array, sr=SAMPLE_RATE, n_mels=32)
+            elif feature_type == "wav":
+                feature = audio_array.copy()
+            else:
+                raise ValueError(f"Unexpected feature type: {feature_type}")
             features.append(feature)
             
         self.features = np.stack(features)
