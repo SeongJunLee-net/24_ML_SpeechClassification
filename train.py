@@ -30,7 +30,7 @@ def seed_everything(seed):
     # torch.backends.cudnn.benchmark = False
     
 def init_train(args):
-    run_id = time.strftime("%m%d%H%M%S")
+    run_id = time.strftime("%m%d%H%M%S") # time_tuple »ý·«½Ã ÇöÀç ½Ã°£ Àû¿ë
     with open(args.config) as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
     
@@ -62,7 +62,6 @@ if __name__ == "__main__":
     train_dataset = FMCCdataset(train_paths, train_targets, **config)
     train_loader = DataLoader(train_dataset, batch_size=config['batch_size'], num_workers=4, shuffle=True)
 
-    ## ë³€ê²½
     if config['model']['params']['block'] == 'Bottleneck':
         config['model']['params']['block'] = Bottleneck
     else:

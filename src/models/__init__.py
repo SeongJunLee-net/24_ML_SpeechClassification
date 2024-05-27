@@ -8,11 +8,11 @@ def load_model_from_config(config):
         ModelClass = BaseWavCNN
         
     elif config['model']['class'] == "BaseMelCNN":
-        assert config['feature_type'] == "mel"
+        assert (config['feature_type'] == "mel") or (config['feature_type'] == "mfcc")
         ModelClass = BaseMelCNN
         
     elif config['model']['class'] == "ResNet": 
-        assert config['feature_type'] == "mel"
+        assert (config['feature_type'] == "mel") or (config['feature_type'] == "mfcc")
         ModelClass = ResNet
         
         
