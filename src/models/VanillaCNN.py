@@ -1,3 +1,4 @@
+from typing import List
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -44,39 +45,64 @@ class BaseWavCNN(nn.Module):
         
         return self.sigmoid(x)
 
-class BaseMelCNN(torch.nn.Module):
-    def __init__(self):
+
+class BasicBlock(nn.Module):
+    def __init__(self,
+                 in_channel, 
+                 out_channel, 
+                 kernel_size=(3,3),
+                 activation = nn.ReLU,
+                 normalize:str = nn.BatchNorm2d,
+                 pool:bool = False,
+                 dropout: float = 0.1
+                 ):
+        super().__init__()
+        self.conv = nn.Conv2d(in_channel, out_channel, kernel_size, padding='same')
+        self.activation = activation()
+        self.normalize = normalize(out_channel)
+        self.pool = nn.MaxPool2d(2, 2) if pool else nn.Identity()
+        self.dropout = nn.Dropout(p=dropout)
+    
+    def forward(self, x):
+        x = self.conv(x)
+        x = self.activation(x)
+        x = self.pool(x)
+        x = self.normalize(x)
+        return self.dropout(x)
+    
+class BaseMelCNN(nn.Module):
+    def __init__(self, 
+                 dims:List[int] = [64, 128, 256, 512],
+                 activation = nn.ReLU,
+                 normalize = nn.BatchNorm2d,
+                 dropout=0.1):
         super(BaseMelCNN, self).__init__()
-        self.layer1 = torch.nn.Sequential(
-            nn.Conv2d(1, 64, kernel_size=(3, 3), padding=1), #cnn layer
-            nn.ReLU(), #activation function
-            nn.MaxPool2d(kernel_size=2, stride=2)) #pooling layer
+
+        layers = []
+        prev_dim = 1
+        n_pooled = 0
+        for dim in dims:
+            pool = dim > prev_dim # Add Pooling Layer only if dim > prev_dim
+            if pool: n_pooled += 1 # Count pooling layer to calculate output shape
+            layers.append(BasicBlock(
+                in_channel=prev_dim, 
+                out_channel=dim,
+                activation=activation,
+                normalize=normalize,
+                pool=pool,
+                dropout=dropout
+            ))
+            prev_dim = dim
+        self.main = nn.Sequential(*layers)
         
-        self.layer2 = torch.nn.Sequential(
-            nn.Conv2d(64, 128, kernel_size=(3, 3), padding=1), #cnn layer
-            nn.ReLU(), #activation function
-            nn.MaxPool2d(kernel_size=2, stride=2)) #pooling layer
-        
-        self.layer3 = torch.nn.Sequential(
-            nn.Conv2d(128, 256, kernel_size=(3, 3), padding=1), #cnn layer
-            nn.ReLU(), #activation function
-            nn.MaxPool2d(kernel_size=2, stride=2)) #pooling layer
-        
-        self.layer4 = torch.nn.Sequential(
-            nn.Conv2d(256, 512, kernel_size=(3, 3), padding=1), #cnn layer
-            nn.ReLU(), #activation function
-            nn.MaxPool2d(kernel_size=2, stride=2)) #pooling layer
         
         self.fc_layer = nn.Sequential( 
-            nn.Linear(4096, 1), #fully connected layer(ouput layer)
+            nn.Linear(dim*8, 1), #fully connected layer(ouput layer)
             nn.Sigmoid()
         )    
         
     def forward(self, x):
-        x = self.layer1(x)
-        x = self.layer2(x)
-        x = self.layer3(x)
-        x = self.layer4(x)
+        x = self.main(x)
         x = torch.flatten(x, 1) 
         x = self.fc_layer(x)
         return x

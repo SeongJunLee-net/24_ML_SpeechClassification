@@ -7,27 +7,22 @@ result_dir: "./checkpoints"
 
 # Model params
 model: 
-  class: "ResNet"
-  params: {'block' : 'BasicBlock','num_classes' : 1} # 
-
-####ResNet Params######
-# block: Type[Union[BasicBlock, Bottleneck]],
-# layers: List[int] = [3,4,6,3],
-# num_classes: int = 1000,
-# zero_init_residual: bool = False,
-# groups: int = 1,
-# width_per_group: int = 64,
-# replace_stride_with_dilation: Optional[List[bool]] = None,
-# norm_layer: Optional[Callable[..., nn.Module]] = None
-
-
+  class: "BaseMelCNN"
+  params: {
+    dims: [64, 64, 128, 128, 256, 256, 512, 512],
+    dropout: 0.1,
+    activation: 'ReLU',
+    normalize: 'BatchNorm2d'
+  } 
 
 # Train params
-feature_type: "mel"
+feature_type: "mfcc"
 epochs: 50
-batch_size: 64
-optimizer: "Adam"
-lr: 0.0001
+batch_size: 16
+optimizer: "AdamW"
+lr: 0.00005
+label_smoothing: 0.1
+scheduler: ""
 
 # etc.
 seed: 1234

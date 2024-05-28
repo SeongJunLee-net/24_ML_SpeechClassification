@@ -10,8 +10,9 @@ from torch.utils.data import DataLoader
 import wandb
 from tqdm import tqdm
 from src.models import load_model_from_config
+from src.models.utils import BCELoss
 from src.utils import prepare_train, prepare_val, FMCCdataset, label2gen
-from src.models.resnet import Bottleneck,BasicBlock
+from src.models.utils import get_optimizer_class
 
 
 def parse_arguments():
@@ -30,7 +31,7 @@ def seed_everything(seed):
     # torch.backends.cudnn.benchmark = False
     
 def init_train(args):
-    run_id = time.strftime("%m%d%H%M%S") # time_tuple 생략시 현재 시간 적용
+    run_id = time.strftime("%m%d%H%M%S") # time_tuple
     with open(args.config) as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
     
@@ -55,19 +56,12 @@ if __name__ == "__main__":
     device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
     seed_everything(config['seed'])
 
-
     
     # 1. Prepare Dataset
     train_paths, train_targets = prepare_train(config['train_ctl'], config['train_dir'])
     train_dataset = FMCCdataset(train_paths, train_targets, **config)
     train_loader = DataLoader(train_dataset, batch_size=config['batch_size'], num_workers=4, shuffle=True)
-
-    if config['model']['params']['block'] == 'Bottleneck':
-        config['model']['params']['block'] = Bottleneck
-    else:
-        config['model']['params']['block'] = BasicBlock
     
-
     
     val_paths, val_targets = prepare_val(config['val_ctl'], config['val_dir'])
     val_dataset = FMCCdataset(val_paths, val_targets, **config)
@@ -77,8 +71,10 @@ if __name__ == "__main__":
     model = load_model_from_config(config)
     model.to(device)
     
-    criterion = nn.BCELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=config['lr'])
+    criterion = BCELoss(**config)
+    #optimizer = torch.optim.Adam(model.parameters(), lr=config['lr'])
+    OptimizerCls = get_optimizer_class(config['optimizer'])
+    optimizer = OptimizerCls(model.parameters(), config['lr'])
 
     # 3. Train
     for epoch in range(config['epochs']):
@@ -125,7 +121,7 @@ if __name__ == "__main__":
     
         
         # Logging & Update
-        print(f"[train_loss: {train_loss}] [val_loss: {val_loss}] [val_acc: {val_acc}]")
+        print(f"[Epoch: {epoch+1}/{config['epochs']}] [train_loss: {train_loss}] [val_loss: {val_loss}] [val_acc: {val_acc}]")
         if config['use_wandb']:
             wandb.log({
                 "trian_loss": train_loss,
