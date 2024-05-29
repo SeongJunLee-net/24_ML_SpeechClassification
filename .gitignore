@@ -4,6 +4,7 @@ wandb/
 *.pth
 *.ckpt
 *.zip
+*.txt
 
 data/
 dataset/

@@ -54,6 +54,16 @@ def prepare_val(ctl_path, data_dir):
   
     return file_paths, targets
 
+def prepare_test(ctl_path, data_dir):
+    file_paths = []
+
+    with open(ctl_path, 'r') as f:
+        for id in f.read().splitlines():
+            path = data_dir + id + ".raw"
+            file_paths.append(path)
+  
+    return file_paths
+
 def get_parameter_count(model:nn.Module):
     cnt = sum(p for p in model.parameters() if p.requires_grad)
     return cnt
@@ -74,7 +84,8 @@ class FMCCdataset(Dataset):
                  feature_type="mel",                # ["mel" / "mfcc" / "wav"]
                  **kwargs
                  ):
-        assert len(file_paths) == len(targets), "(file_paths) and (targets) should have equal size."
+        if targets != None:
+            assert len(file_paths) == len(targets), "(file_paths) and (targets) should have equal size."
         # Preload data
         features = []
         
