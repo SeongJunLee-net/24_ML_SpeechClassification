@@ -172,13 +172,11 @@ if __name__ == "__main__":
             })
 
         if val_acc > best_val_acc:
-            best_acc = val_acc
+            best_val_acc = val_acc
             torch.save(model.state_dict(), result_dir + f"/model.pt")
         if ema_acc > best_ema_acc:
             best_ema_acc = ema_acc
             torch.save(ema.ema_model.state_dict(), result_dir + f"/ema.pt")
-        
-
 
 
 
