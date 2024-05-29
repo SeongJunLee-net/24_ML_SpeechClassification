@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-
+from torch.optim import lr_scheduler
 #https://github.com/pytorch/pytorch/issues/91545
 class BCELoss(nn.Module):
     def __init__(self, 
@@ -47,3 +47,10 @@ def get_optimizer_class(target:str = "Adam"):
     else:
         return ValueError(f'Unexpected Optimizer target: {target}')
     
+def get_scheduler_class(target=None):
+    if target is None:
+        return None
+    elif target == "CosineAnnealingLR":
+        return lr_scheduler.CosineAnnealingLR
+    else:
+        return ValueError(f'Unexpected Scheduler target: {target}')

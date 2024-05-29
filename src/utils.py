@@ -83,11 +83,14 @@ class FMCCdataset(Dataset):
             audio_array = lr.util.fix_length(audio_array, size=int(MAX_AUDIO_LENGTH * SAMPLE_RATE))
             if feature_type=="mfcc":
                 feature = lr.feature.mfcc(y=audio_array, sr=SAMPLE_RATE, n_mfcc=32)
-                (nframes, ncoeff) = feature.shape
-                cep_lifter = 22
-                n = np.arange(ncoeff)
-                lift = 1 + (cep_lifter / 2) * np.sin(np.pi * n / cep_lifter)
-                feature *= lift
+                #feature = (feature - np.mean(feature, axis=(-2,-1), keepdims=True)) / np.std(feature, axis=(-2,-1), keepdims=True)
+
+                ## Reference: https://ratsgo.github.io/speechbook/docs/fe/mfcc
+                #(nframes, ncoeff) = feature.shape
+                #cep_lifter = 22
+                #n = np.arange(ncoeff)
+                #lift = 1 + (cep_lifter / 2) * np.sin(np.pi * n / cep_lifter)
+                #feature *= lift
             elif feature_type == "mel":
                 feature = lr.feature.melspectrogram(y=audio_array, sr=SAMPLE_RATE, n_mels=32)
             elif feature_type == "wav":

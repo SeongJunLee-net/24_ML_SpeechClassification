@@ -7,22 +7,33 @@ result_dir: "./checkpoints"
 
 # Model params
 model: 
-  class: "BaseMelCNN"
+  target: "BaseMelCNN"
   params: {
-    dims: [64, 64, 128, 128, 256, 256, 512, 512],
+    dims: [64, 128, 256, 512],
     dropout: 0.1,
     activation: 'ReLU',
     normalize: 'BatchNorm2d'
   } 
 
+# Optimizer params
+optimizer:
+  target: "AdamW"
+  params: {}
+
+# LR, Scheduler params
+lr: 0.0005
+scheduler:
+  target: "CosineAnnealingLR"
+  params: {
+    "T_max": 200,
+    "eta_min": 0
+  }
+
 # Train params
 feature_type: "mfcc"
 epochs: 50
 batch_size: 16
-optimizer: "AdamW"
-lr: 0.00005
 label_smoothing: 0.1
-scheduler: ""
 
 # etc.
 seed: 1234
