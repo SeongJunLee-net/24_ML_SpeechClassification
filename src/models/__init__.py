@@ -10,7 +10,7 @@ def load_model_from_config(config):
         ModelClass = BaseWavCNN
         
     elif config['model']['target'] == "BaseMelCNN":
-        assert (config['feature_type'] == "mel") or (config['feature_type'] == "mfcc")
+        #assert (config['feature_type'] == "mel") or (config['feature_type'] == "mfcc")
         ModelClass = BaseMelCNN
         
     elif config['model']['target'] == "ResNet": 

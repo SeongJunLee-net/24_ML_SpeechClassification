@@ -50,7 +50,7 @@ class BasicBlock(nn.Module):
     def __init__(self,
                  in_channel, 
                  out_channel, 
-                 kernel_size=(3,3),
+                 kernel_size=(7,7),
                  activation = nn.ReLU,
                  normalize:str = nn.BatchNorm2d,
                  pool:bool = False,
@@ -72,32 +72,30 @@ class BasicBlock(nn.Module):
     
 class BaseMelCNN(nn.Module):
     def __init__(self, 
-                 dims:List[int] = [64, 128, 256, 512],
+                 dims:List[int] = [1, 64, 128, 256, 512],
                  activation = nn.ReLU,
                  normalize = nn.BatchNorm2d,
                  dropout=0.1):
         super(BaseMelCNN, self).__init__()
 
         layers = []
-        prev_dim = 1
         n_pooled = 0
-        for dim in dims:
-            pool = dim > prev_dim # Add Pooling Layer only if dim > prev_dim
+        for i in range(1, len(dims)):
+            pool = dims[i-1] > dims[i] # Add Pooling Layer only if dim > prev_dim
             if pool: n_pooled += 1 # Count pooling layer to calculate output shape
             layers.append(BasicBlock(
-                in_channel=prev_dim, 
-                out_channel=dim,
+                in_channel=dims[i-1], 
+                out_channel=dims[i],
                 activation=activation,
                 normalize=normalize,
                 pool=pool,
                 dropout=dropout
             ))
-            prev_dim = dim
         self.main = nn.Sequential(*layers)
         
         
         self.fc_layer = nn.Sequential( 
-            nn.Linear(dim*8, 1), #fully connected layer(ouput layer)
+            nn.Linear(dims[-1]*16, 1), # TODO
             nn.Sigmoid()
         )    
         

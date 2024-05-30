@@ -68,7 +68,7 @@ def get_parameter_count(model:nn.Module):
     cnt = sum(p for p in model.parameters() if p.requires_grad)
     return cnt
     
-def torchsummary(model:nn.Module, input_size:torch.Tensor,batch_size:int):
+def print_torchsummary(model:nn.Module, input_size:torch.Tensor,batch_size:int):
     '''
     Description
     Model,Input Tensor Size와 Batch Size를 집어넣으면
@@ -81,7 +81,7 @@ class FMCCdataset(Dataset):
     def __init__(self,
                  file_paths: List[os.PathLike],
                  targets: Union[List[str],None] = None,    # List of "male" / "feml"
-                 feature_type="mel",                # ["mel" / "mfcc" / "wav"]
+                 feature_type="mel",                # ["mel" / "mfcc" / "wav" \ "mel+mfcc"]
                  **kwargs
                  ):
         if targets != None:
@@ -93,19 +93,22 @@ class FMCCdataset(Dataset):
             audio_array = read_raw_file(path)
             audio_array = lr.util.fix_length(audio_array, size=int(MAX_AUDIO_LENGTH * SAMPLE_RATE))
             if feature_type=="mfcc":
-                feature = lr.feature.mfcc(y=audio_array, sr=SAMPLE_RATE, n_mfcc=32)
-                #feature = (feature - np.mean(feature, axis=(-2,-1), keepdims=True)) / np.std(feature, axis=(-2,-1), keepdims=True)
-
-                ## Reference: https://ratsgo.github.io/speechbook/docs/fe/mfcc
-                #(nframes, ncoeff) = feature.shape
-                #cep_lifter = 22
-                #n = np.arange(ncoeff)
-                #lift = 1 + (cep_lifter / 2) * np.sin(np.pi * n / cep_lifter)
-                #feature *= lift
+                feature = lr.feature.mfcc(y=audio_array, sr=SAMPLE_RATE, n_mfcc=64)
+                feature = np.expand_dims(feature, axis=0)
+                
             elif feature_type == "mel":
-                feature = lr.feature.melspectrogram(y=audio_array, sr=SAMPLE_RATE, n_mels=32)
+                feature = lr.feature.melspectrogram(y=audio_array, sr=SAMPLE_RATE, n_mels=64)
+                feature = np.expand_dims(feature, axis=0)
+                
             elif feature_type == "wav":
                 feature = audio_array.copy()
+                feature = np.expand_dims(feature, axis=0)
+                
+            elif feature_type == "mel+mfcc":
+                mel = lr.feature.melspectrogram(y=audio_array, sr=SAMPLE_RATE, n_mels=64)
+                mfcc = lr.feature.mfcc(y=audio_array, sr=SAMPLE_RATE, n_mfcc=64)
+                feature = np.stack([mel, mfcc])
+                
             else:
                 raise ValueError(f"Unexpected feature type: {feature_type}")
             features.append(feature)
@@ -118,7 +121,6 @@ class FMCCdataset(Dataset):
     
     def __getitem__(self, idx):
         x = torch.FloatTensor(self.features[idx])
-        x = x.unsqueeze(0)
         
         if self.targets is None:
             return x
