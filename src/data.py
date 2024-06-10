@@ -1,14 +1,22 @@
 import os
 from typing import Union, List
+from copy import deepcopy
 import numpy as np
 import librosa as lr
 import torch
 from torch.utils.data import Dataset
 from src import SPEC_HEIGHT, SPEC_WIDTH, gen2label, SAMPLE_RATE, TRAIN_MFCC_MEAN, TRAIN_MFCC_STD
-from src.data.transforms import build_transforms
 
 
 def read_raw_file(file_path):
+    """ Read .raw file and convert to numpy.ndarrray
+
+    Args:
+        file_path (str): .raw file path
+
+    Returns:
+        _type_: _description_
+    """
     buf = None
     with open(file_path, 'rb') as tf:
         buf = tf.read()
@@ -76,14 +84,18 @@ class FMCCdataset(Dataset):
         for path in file_paths:
             audio_array = read_raw_file(path)
             if len(audio_array) > 36800:
-                audio_array = audio_array[:36800]
-            feature = lr.feature.mfcc(y=audio_array, sr=SAMPLE_RATE, n_mfcc=n_mfcc, fmax=4000)
-            feature = (feature - TRAIN_MFCC_MEAN) / TRAIN_MFCC_STD
+                audio_array = audio_array[:36800] # trim audio
+            
+            # Extract mfcc
+            feature = lr.feature.mfcc(y=audio_array, sr=SAMPLE_RATE, n_mfcc=n_mfcc, fmax=fmax)
+            feature = feature - feature.mean(axis=0, keepdims=True)
+            
+            # Pad
             feature = np.pad(feature, pad_width=((0,SPEC_HEIGHT-feature.shape[0]), (0,SPEC_WIDTH-feature.shape[1])))
             self.features.append(feature)
 
         self.targets = np.array([gen2label[gen] for gen in targets]) if targets else None
-        
+
     def __len__(self):
         return len(self.features)
     
@@ -96,5 +108,3 @@ class FMCCdataset(Dataset):
         else:
             y = torch.FloatTensor([self.targets[idx]])
             return x, y
-
-    

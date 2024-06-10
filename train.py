@@ -23,6 +23,7 @@ def parse_arguments():
     return parser.parse_args()
     
 def seed_everything(seed):
+    # Fix seed for reproduction
     random.seed(seed)
     np.random.seed(seed)
     os.environ["PYTHONHASHSEED"] = str(seed)
@@ -66,7 +67,7 @@ if __name__ == "__main__":
     
     
     val_paths, val_targets = prepare_val(config['val_ctl'], config['val_dir'])
-    val_dataset = FMCCdataset(val_paths, val_targets, **config)
+    val_dataset = FMCCdataset(val_paths, val_targets, mode='val', **config)
     val_loader = DataLoader(val_dataset, batch_size=config['batch_size'], num_workers=4)
 
     # 2. Prepare model, optimizer, etc.

@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 from torch.optim import lr_scheduler
 from src import SPEC_WIDTH, SPEC_HEIGHT
-from src.models.VanillaCNN import BaseMelCNN
+from src.models.cnn import BaseCNN, BottleNeckCNN
 
-#https://github.com/pytorch/pytorch/issues/91545
+#Reference: https://github.com/pytorch/pytorch/issues/91545
 class BCELoss(nn.Module):
     def __init__(self, 
                  label_smoothing=0.0, 
@@ -25,6 +25,10 @@ class BCELoss(nn.Module):
 
         loss = self.bce(input, target)
         return loss
+    
+    
+    
+# Dynamically instantiate train components
     
 def get_normalize_class(target:str = 'BatchNorm2d'):
     if target == 'BatchNorm2d':
@@ -49,6 +53,8 @@ def get_optimizer_class(target:str = "Adam"):
         return torch.optim.Adam
     elif target == 'AdamW':
         return torch.optim.AdamW
+    elif target == 'SGD':
+        return torch.optim.SGD
     else:
         return ValueError(f'Unexpected Optimizer target: {target}')
     
@@ -82,18 +88,12 @@ def calc_fc_dim(config):
     return feature_h * feature_w * config['model']['params']['dims'][-1]
     
 def build_model_from_config(config):
-    if config['model']['target'] == "BaseWavCNN": 
-        assert config['feature_type'] == "wav"
-        ModelClass = BaseWavCNN
+    if config['model']['target'] == "BaseCNN": 
+        ModelClass = BaseCNN
         
-    elif config['model']['target'] == "BaseMelCNN":
-        #assert (config['feature_type'] == "mel") or (config['feature_type'] == "mfcc")
-        ModelClass = BaseMelCNN
-        
-    elif config['model']['target'] == "ResNet": 
-        assert (config['feature_type'] == "mel") or (config['feature_type'] == "mfcc")
-        ModelClass = ResNet
-        
+    elif config['model']['target'] == "BottleNeckCNN":
+        ModelClass = BottleNeckCNN
+
     else: 
         raise ValueError(f"Unexpected Model name: {config['model']['target'] } in config")
     

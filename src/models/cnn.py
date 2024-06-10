@@ -5,6 +5,7 @@ import torch.nn.functional as F
 
 
 class BottleNeck(nn.Module):
+    """BottleNeck block with 1x1 Convolution"""
     def __init__(self,
                  in_channel, 
                  out_channel, 
@@ -49,6 +50,7 @@ class BottleNeck(nn.Module):
     
     
 class BasicBlock(nn.Module):
+    """Basic Convolution block"""
     def __init__(self,
                  in_channel, 
                  out_channel, 
@@ -73,7 +75,7 @@ class BasicBlock(nn.Module):
         x = self.pool(x)
         return x
     
-class BaseMelCNN(nn.Module):
+class BaseCNN(nn.Module):
     def __init__(self, 
                  in_channel:int,
                  out_channel:int,
@@ -86,7 +88,7 @@ class BaseMelCNN(nn.Module):
                  dropout:float,
                  fc_dim:int,
                  ):
-        super(BaseMelCNN, self).__init__()
+        super(BaseCNN, self).__init__()
         assert len(kernel_size) == len(dims) == len(do_pooling)
         layers = []
         prev_dim = in_channel
@@ -95,6 +97,51 @@ class BaseMelCNN(nn.Module):
         for i in range(len(dims)):
             pool = pooling if do_pooling[i] else None
             layers.append(BasicBlock(
+                in_channel=prev_dim, 
+                out_channel=dims[i],
+                kernel_size=kernel_size[i],
+                activation=activation,
+                normalize=normalize,
+                pool=pool,
+                dropout=dropout
+            ))
+            prev_dim = dims[i]
+        self.main = nn.Sequential(*layers)
+        self.fc_layer = nn.Sequential( 
+            nn.Linear(fc_dim, out_channel),
+            nn.Sigmoid()
+        )    
+        
+    def forward(self, x):
+        x = self.main(x)
+        x = torch.flatten(x, 1) 
+        x = self.fc_layer(x)
+        return x
+
+
+
+class BottleNeckCNN(nn.Module):
+    def __init__(self, 
+                 in_channel:int,
+                 out_channel:int,
+                 kernel_size:List[int],
+                 dims:List[int],
+                 do_pooling:List[bool],
+                 pooling,
+                 activation,
+                 normalize,
+                 dropout:float,
+                 fc_dim:int,
+                 ):
+        super(BottleNeckCNN, self).__init__()
+        assert len(kernel_size) == len(dims) == len(do_pooling)
+        layers = []
+        prev_dim = in_channel
+        
+        
+        for i in range(len(dims)):
+            pool = pooling if do_pooling[i] else None
+            layers.append(BottleNeck(
                 in_channel=prev_dim, 
                 out_channel=dims[i],
                 kernel_size=kernel_size[i],

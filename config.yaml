@@ -10,7 +10,7 @@ n_mfcc: 64
 
 # Model params
 model: 
-  target: "BaseMelCNN"
+  target: "BaseCNN"
   params: {
     in_channel: 1,
     out_channel: 1,
@@ -39,13 +39,13 @@ scheduler:
   }
 
 # Train params
-epochs: 100
+epochs: 1000
 batch_size: 32
-label_smoothing: 0.2
+label_smoothing: 0.05
 
 # etc.
 debug: false
 seed: 1234
-use_wandb: true
+use_wandb: false
 wandb_entity: "incheonnationaluniv"
 wandb_project: "ML_2024"
