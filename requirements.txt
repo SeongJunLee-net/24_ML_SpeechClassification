@@ -53,11 +53,11 @@ soundfile==0.12.1
 soxr==0.3.7
 sympy==1.12
 threadpoolctl==3.5.0
-torch==2.2.0
+torch==1.11.0
 tqdm==4.66.4
 triton==2.2.0
 tzdata==2024.1
 urllib3==2.2.1
 wandb==0.17.0
 ema_pytorch
-
+torchsummary==1.5.1
