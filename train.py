@@ -61,12 +61,12 @@ if __name__ == "__main__":
     
     ## 1. Prepare Dataset
     train_paths, train_targets = prepare_train(config['train_ctl'], config['train_dir'], config['debug'])
-    train_dataset = FMCCdataset(train_paths, train_targets, config['preprocess'])
+    train_dataset = FMCCdataset(train_paths, train_targets, **config)
     train_loader = DataLoader(train_dataset, batch_size=config['batch_size'], num_workers=4, shuffle=True)
     
     
     val_paths, val_targets = prepare_val(config['val_ctl'], config['val_dir'])
-    val_dataset = FMCCdataset(val_paths, val_targets, config['preprocess'][-3:])
+    val_dataset = FMCCdataset(val_paths, val_targets, **config)
     val_loader = DataLoader(val_dataset, batch_size=config['batch_size'], num_workers=4)
 
     # 2. Prepare model, optimizer, etc.

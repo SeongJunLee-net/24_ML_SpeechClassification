@@ -5,36 +5,8 @@ val_dir: "./dataset/raw16k/test/"
 val_ctl: "./fmcc_test_ref.ctl"
 result_dir: "./checkpoints"
 
-# Preprocess params
-preprocess:
-  #- target: "GaussianNoise"
-  #  params:
-  #    p: 0.5
-  #    min_amp: 0
-  #    max_amp: 0.05
-  - target: "HorizontalWavFlip"
-    params:
-      p: 0.5
-  - target: "VerticalWavFlip"
-    params:
-      p: 0.5
-  #- target: "Repeat"
-  #  params:
-  #    p: 0.5
-  #    min_rep: 0
-  #    max_rep: 3
-  - target: "PadWav"
-    params: 
-      max_duration: 2.3
-  - target: "MFCC"
-    params:
-      n_mfcc: 64
-      fmax: 4000
-  - target: "Normalize"
-    params:
-      mean: -6.025407
-      std: 54.47857
-
+fmax: 4000
+n_mfcc: 64
 
 # Model params
 model: 
@@ -46,7 +18,7 @@ model:
     dims: [64, 128, 256, 512],
     do_pooling: [true, true, true, true],
     pooling: 'AvgPool2d',
-    dropout: 0.1,
+    dropout: 0.2,
     activation: 'ReLU',
     normalize: 'BatchNorm2d',
     fc_dim: null, # If null, will dynamically calculate the fc dim
@@ -58,7 +30,7 @@ optimizer:
   params: {}
 
 # LR, Scheduler params
-lr: 0.0002
+lr: 0.0005
 scheduler:
   target: "CosineAnnealingLR"
   params: {
@@ -67,8 +39,8 @@ scheduler:
   }
 
 # Train params
-epochs: 50
-batch_size: 16
+epochs: 100
+batch_size: 32
 label_smoothing: 0.2
 
 # etc.

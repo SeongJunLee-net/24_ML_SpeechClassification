@@ -4,7 +4,7 @@ import numpy as np
 import librosa as lr
 import torch
 from torch.utils.data import Dataset
-from src import gen2label
+from src import SPEC_HEIGHT, SPEC_WIDTH, gen2label, SAMPLE_RATE, TRAIN_MFCC_MEAN, TRAIN_MFCC_STD
 from src.data.transforms import build_transforms
 
 
@@ -64,24 +64,31 @@ class FMCCdataset(Dataset):
     def __init__(self,
                  file_paths: List[os.PathLike],
                  targets: Union[List[str],None] = None,    # List of "male" / "feml"
-                 preprocess: List[dict] = None,
+                 n_mfcc = 64,
+                 fmax = 4000,
                  **kwargs
                  ):
         if targets != None:
             assert len(file_paths) == len(targets), "(file_paths) and (targets) should have equal size."
             
         # Preload data
-        self.features = [read_raw_file(path) for path in file_paths]
+        self.features = []
+        for path in file_paths:
+            audio_array = read_raw_file(path)
+            if len(audio_array) > 36800:
+                audio_array = audio_array[:36800]
+            feature = lr.feature.mfcc(y=audio_array, sr=SAMPLE_RATE, n_mfcc=n_mfcc, fmax=4000)
+            feature = (feature - TRAIN_MFCC_MEAN) / TRAIN_MFCC_STD
+            feature = np.pad(feature, pad_width=((0,SPEC_HEIGHT-feature.shape[0]), (0,SPEC_WIDTH-feature.shape[1])))
+            self.features.append(feature)
+
         self.targets = np.array([gen2label[gen] for gen in targets]) if targets else None
-    
-        # Preprocessor
-        self.transforms = build_transforms(preprocess)
         
     def __len__(self):
         return len(self.features)
     
     def __getitem__(self, idx):
-        x = self.transforms(self.features[idx])
+        x = self.features[idx]
         x = torch.FloatTensor(x).unsqueeze(0)
         
         if self.targets is None:
