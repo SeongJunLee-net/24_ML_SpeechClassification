@@ -285,7 +285,7 @@ dataset/raw16k/test/fmcc_test_0284.raw feml
 dataset/raw16k/test/fmcc_test_0285.raw feml
 dataset/raw16k/test/fmcc_test_0286.raw feml
 dataset/raw16k/test/fmcc_test_0287.raw feml
-dataset/raw16k/test/fmcc_test_0288.raw feml
+dataset/raw16k/test/fmcc_test_0288.raw male
 dataset/raw16k/test/fmcc_test_0289.raw feml
 dataset/raw16k/test/fmcc_test_0290.raw feml
 dataset/raw16k/test/fmcc_test_0291.raw feml
@@ -820,7 +820,7 @@ dataset/raw16k/test/fmcc_test_0819.raw male
 dataset/raw16k/test/fmcc_test_0820.raw male
 dataset/raw16k/test/fmcc_test_0821.raw male
 dataset/raw16k/test/fmcc_test_0822.raw male
-dataset/raw16k/test/fmcc_test_0823.raw feml
+dataset/raw16k/test/fmcc_test_0823.raw male
 dataset/raw16k/test/fmcc_test_0824.raw male
 dataset/raw16k/test/fmcc_test_0825.raw male
 dataset/raw16k/test/fmcc_test_0826.raw male

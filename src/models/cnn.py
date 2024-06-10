@@ -34,16 +34,16 @@ class BottleNeck(nn.Module):
     
     def forward(self, x):
         x = self.conv1(x)
-        x = self.activation(x)
         x = self.normalize1(x)
+        x = self.activation(x)
         
         x = self.conv2(x)
-        x = self.activation(x)
         x = self.normalize2(x)
+        x = self.activation(x)
         
         x = self.conv3(x)
-        x = self.activation(x)
         x = self.normalize3(x)
+        x = self.activation(x)
         self.dropout(x)
 
         return self.pool(x) 
