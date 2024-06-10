@@ -6,8 +6,7 @@ wandb/
 *.zip
 *.txt
 
-data/
 dataset/
 temp.ipynb
-checkpoints/*
+checkpoints/
 

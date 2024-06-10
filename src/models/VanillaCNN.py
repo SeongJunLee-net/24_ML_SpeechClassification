@@ -4,98 +4,109 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class BaseWavCNN(nn.Module):
-    def __init__(self):
+class BottleNeck(nn.Module):
+    def __init__(self,
+                 in_channel, 
+                 out_channel, 
+                 kernel_size=(3,3),
+                 activation = nn.ReLU,
+                 normalize = nn.BatchNorm2d,
+                 pool = False,
+                 dropout: float = 0.1
+                 ):
         super().__init__()
-        # 1D Convolutional layer 1
-        self.conv1 = nn.Conv1d(in_channels=1, out_channels=16, kernel_size=3, stride=1, padding=1)
-        self.pool = nn.MaxPool1d(kernel_size=2, stride=2, padding=0)
-        # 1D Convolutional layer 2
-        self.conv2 = nn.Conv1d(in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=1)
-        # 1D Convolutional layer 3
-        self.conv3 = nn.Conv1d(in_channels=32, out_channels=64, kernel_size=3, stride=1, padding=1)
-        self.flatten = nn.Flatten()
-        # Calculate the size of the flattened features after convolution and pooling layers
-        self._to_linear = None
-        self.convs(torch.randn(1, 1, 36800))  # This will set self._to_linear
+        mid_channel = out_channel//2
+        if mid_channel < 64:
+            mid_channel = 64
+        self.conv1 = nn.Conv2d(in_channel, mid_channel, kernel_size=(1,1), padding='same')
+        self.normalize1 = normalize(mid_channel)
         
-        # Fully connected layer 1
-        self.fc1 = nn.Linear(self._to_linear, 1024)
-        # Fully connected layer 2
-        self.fc2 = nn.Linear(1024, 512)
-        # Output layer
-        self.fc3 = nn.Linear(512, 1)  # Single output
-        self.sigmoid = nn.Sigmoid()
+        self.conv2 = nn.Conv2d(mid_channel, mid_channel, kernel_size=kernel_size, padding='same')
+        self.normalize2 = normalize(mid_channel)
+        
+        self.conv3 = nn.Conv2d(mid_channel, out_channel, kernel_size=(1,1), padding='same')
+        self.normalize3 = normalize(out_channel)
 
-    def convs(self, x): 
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = self.pool(F.relu(self.conv3(x)))
-        if self._to_linear is None:
-            self._to_linear = x.numel()
-        return x
-
+        self.activation = activation()
+        self.pool = pool(2, 2) if pool != None else nn.Identity()
+        self.dropout = nn.Dropout(p=dropout)
+    
     def forward(self, x):
-        x = self.convs(x)
-        x = x.view(-1, self._to_linear)  # Flatten the tensor
+        x = self.conv1(x)
+        x = self.activation(x)
+        x = self.normalize1(x)
         
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)  # No activation here as we want raw output
+        x = self.conv2(x)
+        x = self.activation(x)
+        x = self.normalize2(x)
         
-        return self.sigmoid(x)
+        x = self.conv3(x)
+        x = self.activation(x)
+        x = self.normalize3(x)
+        self.dropout(x)
 
-
+        return self.pool(x) 
+    
+    
 class BasicBlock(nn.Module):
     def __init__(self,
                  in_channel, 
                  out_channel, 
-                 kernel_size=(7,7),
+                 kernel_size=(3,3),
                  activation = nn.ReLU,
-                 normalize:str = nn.BatchNorm2d,
-                 pool:bool = False,
+                 normalize = nn.BatchNorm2d,
+                 pool = False,
                  dropout: float = 0.1
                  ):
         super().__init__()
         self.conv = nn.Conv2d(in_channel, out_channel, kernel_size, padding='same')
         self.activation = activation()
         self.normalize = normalize(out_channel)
-        self.pool = nn.MaxPool2d(2, 2) if pool else nn.Identity()
+        self.pool = pool(2, 2) if pool != None else nn.Identity()
         self.dropout = nn.Dropout(p=dropout)
     
     def forward(self, x):
         x = self.conv(x)
-        x = self.activation(x)
-        x = self.pool(x)
         x = self.normalize(x)
-        return self.dropout(x)
+        x = self.activation(x)
+        x = self.dropout(x)
+        x = self.pool(x)
+        return x
     
 class BaseMelCNN(nn.Module):
     def __init__(self, 
-                 dims:List[int] = [1, 64, 128, 256, 512],
-                 activation = nn.ReLU,
-                 normalize = nn.BatchNorm2d,
-                 dropout=0.1):
+                 in_channel:int,
+                 out_channel:int,
+                 kernel_size:List[int],
+                 dims:List[int],
+                 do_pooling:List[bool],
+                 pooling,
+                 activation,
+                 normalize,
+                 dropout:float,
+                 fc_dim:int,
+                 ):
         super(BaseMelCNN, self).__init__()
-
+        assert len(kernel_size) == len(dims) == len(do_pooling)
         layers = []
-        n_pooled = 0
-        for i in range(1, len(dims)):
-            pool = dims[i-1] > dims[i] # Add Pooling Layer only if dim > prev_dim
-            if pool: n_pooled += 1 # Count pooling layer to calculate output shape
+        prev_dim = in_channel
+        
+        
+        for i in range(len(dims)):
+            pool = pooling if do_pooling[i] else None
             layers.append(BasicBlock(
-                in_channel=dims[i-1], 
+                in_channel=prev_dim, 
                 out_channel=dims[i],
+                kernel_size=kernel_size[i],
                 activation=activation,
                 normalize=normalize,
                 pool=pool,
                 dropout=dropout
             ))
+            prev_dim = dims[i]
         self.main = nn.Sequential(*layers)
-        
-        
         self.fc_layer = nn.Sequential( 
-            nn.Linear(dims[-1]*16, 1), # TODO
+            nn.Linear(fc_dim, out_channel),
             nn.Sigmoid()
         )    
         

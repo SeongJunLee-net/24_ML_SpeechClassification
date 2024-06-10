@@ -1,6 +1,9 @@
 import torch
 import torch.nn as nn
 from torch.optim import lr_scheduler
+from src import SPEC_WIDTH, SPEC_HEIGHT
+from src.models.VanillaCNN import BaseMelCNN
+
 #https://github.com/pytorch/pytorch/issues/91545
 class BCELoss(nn.Module):
     def __init__(self, 
@@ -26,8 +29,8 @@ class BCELoss(nn.Module):
 def get_normalize_class(target:str = 'BatchNorm2d'):
     if target == 'BatchNorm2d':
         return nn.BatchNorm2d
-    elif target == 'LayerNorm':
-        return nn.LayerNorm
+    elif target == 'InstanceNorm2d':
+        return nn.InstanceNorm2d
     else:
         return ValueError(f'Unexpected Normalization target: {target}')
     
@@ -36,6 +39,8 @@ def get_activation_class(target:str = "ReLU"):
         return nn.ReLU
     elif target == 'LeakyReLU':
         return nn.LeakyReLU
+    elif target == 'SiLU':
+        return nn.SiLU
     else:
         return ValueError(f'Unexpected Activation target: {target}')
     
@@ -52,5 +57,50 @@ def get_scheduler_class(target=None):
         return None
     elif target == "CosineAnnealingLR":
         return lr_scheduler.CosineAnnealingLR
+    elif target == "CyclicLR":
+        return lr_scheduler.CyclicLR
     else:
         return ValueError(f'Unexpected Scheduler target: {target}')
+    
+def get_pooling_class(target=None):
+    if target is None:
+        return None
+    elif target == "MaxPool2d":
+        return nn.MaxPool2d
+    elif target == "AvgPool2d":
+        return nn.AvgPool2d
+    else:
+        return ValueError(f'Unexpected Pooler target: {target}')
+    
+def calc_fc_dim(config):
+    feature_h = SPEC_HEIGHT
+    feature_w = SPEC_WIDTH
+    for pool in config['model']['params']['do_pooling']:
+        if pool:
+            feature_h = feature_h // 2
+            feature_w = feature_w // 2
+    return feature_h * feature_w * config['model']['params']['dims'][-1]
+    
+def build_model_from_config(config):
+    if config['model']['target'] == "BaseWavCNN": 
+        assert config['feature_type'] == "wav"
+        ModelClass = BaseWavCNN
+        
+    elif config['model']['target'] == "BaseMelCNN":
+        #assert (config['feature_type'] == "mel") or (config['feature_type'] == "mfcc")
+        ModelClass = BaseMelCNN
+        
+    elif config['model']['target'] == "ResNet": 
+        assert (config['feature_type'] == "mel") or (config['feature_type'] == "mfcc")
+        ModelClass = ResNet
+        
+    else: 
+        raise ValueError(f"Unexpected Model name: {config['model']['target'] } in config")
+    
+    params = config['model']['params']
+    params['fc_dim'] = calc_fc_dim(config)
+    params['activation'] = get_activation_class(params['activation'])
+    params['normalize'] = get_normalize_class(params['normalize'])
+    params['pooling'] = get_pooling_class(params['pooling'])
+    
+    return ModelClass(**params)

@@ -5,14 +5,51 @@ val_dir: "./dataset/raw16k/test/"
 val_ctl: "./fmcc_test_ref.ctl"
 result_dir: "./checkpoints"
 
+# Preprocess params
+preprocess:
+  #- target: "GaussianNoise"
+  #  params:
+  #    p: 0.5
+  #    min_amp: 0
+  #    max_amp: 0.05
+  - target: "HorizontalWavFlip"
+    params:
+      p: 0.5
+  - target: "VerticalWavFlip"
+    params:
+      p: 0.5
+  #- target: "Repeat"
+  #  params:
+  #    p: 0.5
+  #    min_rep: 0
+  #    max_rep: 3
+  - target: "PadWav"
+    params: 
+      max_duration: 2.3
+  - target: "MFCC"
+    params:
+      n_mfcc: 64
+      fmax: 4000
+  - target: "Normalize"
+    params:
+      mean: -6.025407
+      std: 54.47857
+
+
 # Model params
 model: 
   target: "BaseMelCNN"
   params: {
+    in_channel: 1,
+    out_channel: 1,
+    kernel_size: [7, 7, 7, 7],
     dims: [64, 128, 256, 512],
+    do_pooling: [true, true, true, true],
+    pooling: 'AvgPool2d',
     dropout: 0.1,
     activation: 'ReLU',
-    normalize: 'BatchNorm2d'
+    normalize: 'BatchNorm2d',
+    fc_dim: null, # If null, will dynamically calculate the fc dim
   } 
 
 # Optimizer params
@@ -21,7 +58,7 @@ optimizer:
   params: {}
 
 # LR, Scheduler params
-lr: 0.0005
+lr: 0.0002
 scheduler:
   target: "CosineAnnealingLR"
   params: {
@@ -30,12 +67,12 @@ scheduler:
   }
 
 # Train params
-feature_type: "mfcc"
 epochs: 50
 batch_size: 16
-label_smoothing: 0.1
+label_smoothing: 0.2
 
 # etc.
+debug: false
 seed: 1234
 use_wandb: true
 wandb_entity: "incheonnationaluniv"
