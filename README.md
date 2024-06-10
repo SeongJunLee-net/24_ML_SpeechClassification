@@ -24,15 +24,15 @@ python train.py --config <YOUR_CONFIG_PATH>
 # Evaluation
 1. Run inference and Generate `Perceptron_test_results.txt`
     ```
-    python inference.py --input_path fmcc_test.ctl \
-        --result_path Perceptron_test_results.txt \
-        --data_dir dataset/raw16k/test/ \
-        --model_checkpoint checkpoints/0610115534 \
-        --use_ema
+    bash test.sh
     ```
     **or**
     ```
-    bash test.sh
+    python inference.py --input_path <METADATA_FILE_PATH> \   # .ctl
+        --result_path <RESULT_FILE_PATH \
+        --data_dir <DATASET_ROOT_DIR \
+        --model_checkpoint <MODEL_CHECKPOINT> \
+        --use_ema
     ```
 2. Evaluate with ground truth metadata
     ```
