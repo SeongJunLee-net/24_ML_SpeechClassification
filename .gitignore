@@ -1,10 +1,7 @@
 __pycache__/
 wandb/
-*.pt
-*.pth
 *.ckpt
 *.zip
-*.txt
 
 dataset/
 temp.ipynb
