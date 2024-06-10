@@ -1,0 +1,49 @@
+batch_size: 32
+debug: false
+epochs: 1000
+fmax: 4000
+label_smoothing: 0.05
+lr: 5.0e-05
+model:
+  params:
+    activation: ReLU
+    dims:
+    - 64
+    - 128
+    - 128
+    - 256
+    do_pooling:
+    - true
+    - true
+    - true
+    - true
+    dropout: 0.2
+    fc_dim: null
+    in_channel: 1
+    kernel_size:
+    - 7
+    - 7
+    - 7
+    - 7
+    normalize: BatchNorm2d
+    out_channel: 1
+    pooling: AvgPool2d
+  target: BottleNeckCNN
+n_mfcc: 64
+optimizer:
+  params: {}
+  target: AdamW
+result_dir: ./checkpoints
+scheduler:
+  params:
+    T_max: 200
+    eta_min: 0
+  target: CosineAnnealingLR
+seed: 1234
+train_ctl: ./fmcc_train.ctl
+train_dir: ./dataset/raw16k/train/
+use_wandb: false
+val_ctl: ./fmcc_test_ref.ctl
+val_dir: ./dataset/raw16k/test/
+wandb_entity: incheonnationaluniv
+wandb_project: ML_2024
